@@ -18,8 +18,8 @@
 
 /* Mbed include */
 #include "mbed.h"
-#include "KVStore.h"
-#include "kvstore_global_api.h"
+#include "kvstore/KVStore.h"
+#include "kvstore_global_api/kvstore_global_api.h"
 
 /* AWS credential include */
 /* Never include. Get credentials from provision. */

@@ -85,7 +85,7 @@ extern "C" {
     #error("Target not support")
 #endif
 
-#if ( (MBED_MAJOR_VERSION == 6) && (TARGET_M480) )
+#if ( (MBED_MAJOR_VERSION >= 6) && (TARGET_M480) )
     #define PRNG_OBJ CRPT
     #define NU_PRNG_ENABLE_INT()    PRNG_ENABLE_INT(CRPT)
     #define NU_PRNG_Open(a, b, c)   PRNG_Open(CRPT, a, b, c)

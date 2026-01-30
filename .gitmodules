@@ -1,0 +1,6 @@
+[submodule "mbed-os"]
+	path = mbed-os
+	url = https://github.com/mbed-ce/mbed-os
+[submodule "mbed-ce-client-for-aws"]
+	path = mbed-ce-client-for-aws
+	url = https://github.com/mbed-nuvoton/mbed-ce-client-for-aws
