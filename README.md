@@ -1,12 +1,12 @@
-# Example for Firmware OTA with AWS IoT on Nuvoton's Mbed Enabled boards
+# Example for Firmware OTA with AWS IoT on Nuvoton's Mbed CE enabled boards
 
 This is an example to show firmware Over-The-Air (OTA) with [AWS IoT service](https://aws.amazon.com/console/) on Nuvoton's Mbed Enabled boards.
 It relies on the following modules:
 
--   [Mbed OS](https://github.com/ARMmbed/mbed-os):
+-   [Mbed OS Community Edition](https://github.com/mbed-ce/mbed-os)
     Is an open source embedded operating system designed specifically for the "things" in the Internet of Things.
--   [AWS IoT SDK port for Mbed OS](https://github.com/OpenNuvoton/mbed-client-for-aws/):
-    Provides the port of the AWS IoT SDK for Mbed OS. It can be used to connect devices running Mbed OS to the AWS IoT Core service over MQTT.
+-   [AWS IoT SDK port for Mbed CE](https://github.com/mbed-nuvoton/mbed-ce-client-for-aws/):
+    Provides the port of the AWS IoT SDK for Mbed CE. It can be used to connect devices running Mbed CE to the AWS IoT Core service over MQTT.
 
 ## Support targets
 
@@ -19,45 +19,53 @@ NuMaker-IoT-M467                                                            | Wi
 
 ## Support development tools
 
--   [Arm's Mbed Online Compiler](https://os.mbed.com/docs/mbed-os/v6.6/tools/developing-mbed-online-compiler.html)
+Use cmake-based build system.
+Check out [hello world example](https://github.com/mbed-ce/mbed-ce-hello-world) for getting started.
 
-    **NOTE**: Support no NuMaker-IoT-M467/NuMaker-PFM-M487/NuMaker-IOT-M487/NuMaker-M2354
-
+**_NOTE:_** Legacy development tools below are not supported anymore.
 -   [Arm's Mbed Studio](https://os.mbed.com/docs/mbed-os/v6.15/build-tools/mbed-studio.html)
-
 -   [Arm's Mbed CLI 2](https://os.mbed.com/docs/mbed-os/v6.15/build-tools/mbed-cli-2.html)
-
-    **NOTE**: Support no NuMaker-IoT-M467/NuMaker-PFM-M487/NuMaker-IOT-M487. See [the issue thread](https://github.com/ARMmbed/mbed-tools/issues/156).
-
 -   [Arm's Mbed CLI 1](https://os.mbed.com/docs/mbed-os/v6.15/tools/developing-mbed-cli.html)
+
+For [VS Code development](https://github.com/mbed-ce/mbed-os/wiki/Project-Setup:-VS-Code)
+or [OpenOCD as upload method](https://github.com/mbed-ce/mbed-os/wiki/Upload-Methods#openocd),
+install below additionally:
+
+-   [NuEclipse](https://github.com/OpenNuvoton/Nuvoton_Tools#numicro-software-development-tools): Nuvoton's fork of Eclipse
+-   Nuvoton forked OpenOCD: Shipped with NuEclipse installation package above.
+    Checking openocd version `openocd --version`, it should fix to `0.10.022`.
 
 ## Developer guide
 
-This section is intended for developers to get started, import the example application, compile with Mbed CLI 1, and get it running firmware OTA with AWS IoT service.
+This chapter is intended for developers to get started, import the example application, build, and get it running firmware OTA with AWS IoT service.
 
 ### Hardware requirements
 
--   NuMaker-IoT-M467 board
--   [NuMaker-IoT-M487 board](https://os.mbed.com/platforms/NUMAKER-IOT-M487/)
--   [NuMaker-M2354 board](https://os.mbed.com/platforms/NUMAKER-M2354/)
+-   [NuMaker-IoT-M467 board](https://www.nuvoton.com/board/numaker-iot-m467/)  
+-   [NuMaker-IoT-M487 board](https://www.nuvoton.com/board/numaker-iot-m487/)
+-   [NuMaker-M2354 board](https://www.nuvoton.com/board/numaker-m2354/)
 
 **NOTE**: Choose either one as example board for demonstrating below
 
 ### Software requirements
 
--   [Arm's Mbed CLI 1](https://os.mbed.com/docs/mbed-os/v6.15/tools/developing-mbed-cli.html)
-
--   [Image tool](https://github.com/mcu-tools/mcuboot/blob/main/docs/imgtool.md) (NuMaker-IoT-M467 only)
+-   [Image tool](https://github.com/mcu-tools/mcuboot/blob/main/docs/imgtool.md)
 
     **NOTE**: Used for signing application binary for MCUboot
 
--   [SRecord](http://srecord.sourceforge.net/) (NuMaker-IoT-M467 only)
+-   [SRecord](http://srecord.sourceforge.net/)
 
-    **NOTE**: Used for concatenating bootloader binary and application binary
+    **NOTE**: Used for concatenating MCUboot bootloader binary and application binary
 
--   [NuMicro ICP Programming Tool](https://www.nuvoton.com/tool-and-software/software-development-tool/programmer/) (NuMaker-IoT-M487 only)
+-   [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/)
 
-    **NOTE**: Used for flashing onto board
+    **NOTE**: You need to also install `azure-iot` extension:
+    ```
+    $ az extension add --name azure-iot
+    ```
+
+    **NOTE**: Used for creating
+    [Device Update import manifest](https://learn.microsoft.com/en-us/azure/iot-hub-device-update/create-update#create-a-basic-device-update-import-manifest).
 
 ### Hardware setup
 
@@ -74,18 +82,35 @@ This section is intended for developers to get started, import the example appli
     -   NuMaker-IoT-M487: Mbed USB drive shows up in File Browser
     -   NuMaker-M2354: Mbed USB drive shows up in File Browser
 
-### Compile with Mbed CLI 1
+### Build the example
 
 In the following, we take NuMaker-IoT-M467, NuMaker-IoT-M487, or NuMaker-M2354 as example board to show this example.
 
 1.  Clone the example and navigate into it
     ```
-    $ git clone https://github.com/OpenNuvoton/NuMaker-mbed-AWSn-IoT-CSDK-OTA-example
-    $ cd NuMaker-mbed-AWS-IoT-CSDK-OTA-example
+    $ git clone https://github.com/mbed-nuvoton/NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example
+    $ cd NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example
     ```
 1.  Deploy necessary libraries
     ```
-    $ mbed deploy
+    $ git submodule update --init
+    ```
+    Or for fast install:
+    ```
+    $ git submodule update --init --filter=blob:none
+    ```
+
+    Deploy further for `mbed-ce-client-for-aws` library:
+    ```
+    $ cd mbed-ce-client-for-aws; \
+    git submodule update --init; \
+    cd ..
+    ```
+    Or for fast install:
+    ```
+    $ cd mbed-ce-client-for-aws; \
+    git submodule update --init --filter=blob:none; \
+    cd ..
     ```
 1.  Configure network interface
     In `mbed_app.json`, configure WiFi **SSID**/**PASSWORD** (WiFi only).
@@ -98,38 +123,62 @@ In the following, we take NuMaker-IoT-M467, NuMaker-IoT-M487, or NuMaker-M2354 a
 
 1.  In `configs/aws_credentials.c`, provide relevant AWS credentials.
 
-1.  Build the example on **ARM** toolchain
+1.  Compile with cmake/ninja
     -   NuMaker-IoT-M467
         ```
-        $ mbed compile -m NUMAKER_IOT_M467 -t ARM
+        $ mkdir build; cd build
+        $ cmake .. -GNinja -DCMAKE_BUILD_TYPE=Develop -DMBED_TARGET=NUMAKER_IOT_M467 -DMCUBOOT_SIGNING_KEY="bootloader/MCUboot/signing-keys.pem" -DMBED_USE_SHALLOW_SUBMODULES=FALSE
+        $ ninja
+        $ cd ..
         ```
     -   NuMaker-IoT-M487
         ```
-        $ mbed compile -m NUMAKER_IOT_M487 -t ARM
+        $ mkdir build; cd build
+        $ cmake .. -GNinja -DCMAKE_BUILD_TYPE=Develop -DMBED_TARGET=NUMAKER_IOT_M487 -DMCUBOOT_SIGNING_KEY="bootloader/MCUboot/signing-keys.pem" -DMBED_USE_SHALLOW_SUBMODULES=FALSE
+        $ ninja
+        $ cd ..
         ```
     -   NuMaker-M2354
         ```
-        $ mbed compile -m NU_M2354 -t ARM
+        $ mkdir build; cd build
+        $ cmake .. -GNinja -DCMAKE_BUILD_TYPE=Develop -DMBED_TARGET=NU_M2354 -DMCUBOOT_SIGNING_KEY="bootloader/MCUboot/signing-keys.pem" -DMBED_USE_SHALLOW_SUBMODULES=FALSE
+        $ ninja
+        $ cd ..
         ```
 
 1.  Append version suffix `_V1.0.0` to the built image file name for distinct from below.
 
-    -   NuMaker-IoT-M467
+    -   NuMaker-IoT-M467/NuMaker-IoT-M487
+        ```
+        $ mv \
+        build/NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example.bin \
+        build/NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_V1.0.0.bin
+        ```
 
-        BUILD/NUMAKER_IOT_M467/ARM/`NuMaker-mbed-AWS-IoT-CSDK-OTA-example.bin` ??`NuMaker-mbed-AWS-IoT-CSDK-OTA-example_V1.0.0.bin`
-
-    -   NuMaker-IoT-M487
-
-        BUILD/NUMAKER_IOT_M487/ARM/`NuMaker-mbed-AWS-IoT-CSDK-OTA-example.bin` ??`NuMaker-mbed-AWS-IoT-CSDK-OTA-example_V1.0.0.bin`
+        **NOTE**: This file will be signed later.
 
     -   NuMaker-M2354
+        ```
+        $ mv \
+        build/NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_update.bin \
+        build/NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_V1.0.0.bin
+        ```
 
-        BUILD/NU_M2354/ARM/`NuMaker-mbed-AWS-IoT-CSDK-OTA-example.bin` ??`NuMaker-mbed-AWS-IoT-CSDK-OTA-example_V1.0.0.bin`
+        **NOTE**: **DO** choose the built image file name having `_update` suffix. 
 
-    **NOTE**: For NuMaker-IoT-M467/NuMaker-IoT-M487, this file will be signed later.
-    For NuMaker-IoT-M487/NuMaker-M2354, this file is for flash later.
+        **NOTE**: This file is not combination of bootloader and application
+        and is application only.
 
-1.  Sign application binary of first version `V1.0.0` (MCUboot only)
+        Also rename the below file for clear intention:
+        ```
+        $ mv \
+        build/NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example.hex \
+        build/NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_merged.hex
+        ```
+        **NOTE**: This file has been combination of bootloader and application
+        and can be used for flash.
+
+1.  Sign application binary of first version `V1.0.0`
 
     -   NuMaker-IoT-M467
         ```
@@ -140,8 +189,8 @@ In the following, we take NuMaker-IoT-M467, NuMaker-IoT-M487, or NuMaker-M2354 a
         --header-size 4096 \
         --pad-header \
         -S 0x73000 \
-        BUILD/NUMAKER_IOT_M467/ARM/NuMaker-mbed-AWS-IoT-CSDK-OTA-example_V1.0.0.bin \
-        BUILD/NUMAKER_IOT_M467/ARM/NuMaker-mbed-AWS-IoT-CSDK-OTA-example_V1.0.0_signed.bin
+        build/NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_V1.0.0.bin \
+        build/NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_V1.0.0_signed.bin
         ```
 
     -   NuMaker-IoT-M487
@@ -154,52 +203,59 @@ In the following, we take NuMaker-IoT-M467, NuMaker-IoT-M487, or NuMaker-M2354 a
         --header-size 4096 \
         --pad-header \
         -S 0x66000 \
-        BUILD/NUMAKER_IOT_M487/ARM/NuMaker-mbed-AWS-IoT-CSDK-OTA-example_V1.0.0.bin \
-        BUILD/NUMAKER_IOT_M487/ARM/NuMaker-mbed-AWS-IoT-CSDK-OTA-example_V1.0.0_signed.bin
+        build/NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_V1.0.0.bin \
+        build/NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_V1.0.0_signed.bin
         ```
 
-        **NOTE**: This file will be combined with MCUboot bootloader later.
+    **NOTE**: This file will be combined with MCUboot bootloader later.
 
-        **NOTE**: Application version for MCUboot is `V1.0.0+0` and for AWS is `V1.0.0`.
-        These two version numbers are made the same to be consistent.
+    **NOTE**: Application version for MCUboot is `V1.0.0+0` and for AWS is `V1.0.0`.
+    These two version numbers are made the same to be consistent.
 
-        **NOTE**: `-S 0x73000`/`-S 0x66000` is to specify MCUboot primary/secondary slot size.
+    **NOTE**: `-S 0x73000`/`-S 0x66000` is to specify MCUboot primary/secondary slot size.
 
 1.  Re-build the example with increasing version of the application.
-    For example, set `APP_VERSION_MAJOR/MINOR/BUILD` in `configs/aws_config.h` to `1/0/1`.
-    -   NuMaker-IoT-M467
+    1.  Set `APP_VERSION_MAJOR/MINOR/BUILD` in `configs/aws_config.h` to `1/0/1`.
+
+    1.  Re-compile with cmake/ninja
         ```
-        $ mbed compile -m NUMAKER_IOT_M467 -t ARM
-        ```
-    -   NuMaker-IoT-M487
-        ```
-        $ mbed compile -m NUMAKER_IOT_M487 -t ARM
-        ```
-    -   NuMaker-M2354
-        ```
-        $ mbed compile -m NU_M2354 -t ARM
+        $ cd build
+        $ ninja
+        $ cd ..
         ```
 
 1.  Append version suffix `_V1.0.1` to the built image file name for distinct from above.
 
-    -   NuMaker-IoT-M467
+    -   NuMaker-IoT-M467/NuMaker-IoT-M487
+        ```
+        $ mv \
+        build/NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example.bin \
+        build/NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_V1.0.1.bin
+        ```
 
-        BUILD/NUMAKER_IOT_M467/ARM/`NuMaker-mbed-AWS-IoT-CSDK-OTA-example.bin` ??`NuMaker-mbed-AWS-IoT-CSDK-OTA-example_V1.0.1.bin`
-
-    -   NuMaker-IoT-M487
-
-        BUILD/NUMAKER_IOT_M487/ARM/`NuMaker-mbed-AWS-IoT-CSDK-OTA-example.bin` ??`NuMaker-mbed-AWS-IoT-CSDK-OTA-example_V1.0.1.bin`
+        **NOTE**: This file will be signed later.
 
     -   NuMaker-M2354
+        ```
+        $ mv \
+        build/NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_update.bin \
+        build/NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_V1.0.1.bin
+        ```
 
-        BUILD/NU_M2354/ARM/`NuMaker-mbed-AWS-IoT-CSDK-OTA-example_update.bin` ??`NuMaker-mbed-AWS-IoT-CSDK-OTA-example_update_V1.0.1.bin`
+        **NOTE**: **DO** choose the built image file name having `_update` suffix.     
 
-        **NOTE**: For NuMaker-M2354, **DO** choose the built image file name having `_update` suffix. 
+        **NOTE**: This file is for upload to AWS S3 bucket later.
 
-    **NOTE**: For NuMaker-IoT-M467/NuMaker-IoT-M487, this file will be signed later.
-    For NuMaker-M2354, this file is for upload to AWS S3 bucket later.
+        Also rename the below file for clear intention:
+        ```
+        $ mv \
+        build/NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example.hex \
+        build/NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_V1.0.1_merged.hex
+        ```
+        **NOTE**: This file has been combination of bootloader and application
+        and can be used for flash.
 
-1.  Sign application binary of second version `V1.0.1` (MCUboot only)
+1.  Sign application binary of second version `V1.0.1`
 
     -   NuMaker-IoT-M467
         ```
@@ -210,8 +266,8 @@ In the following, we take NuMaker-IoT-M467, NuMaker-IoT-M487, or NuMaker-M2354 a
         --header-size 4096 \
         --pad-header \
         -S 0x73000 \
-        BUILD/NUMAKER_IOT_M467/ARM/NuMaker-mbed-AWS-IoT-CSDK-OTA-example_V1.0.1.bin \
-        BUILD/NUMAKER_IOT_M467/ARM/NuMaker-mbed-AWS-IoT-CSDK-OTA-example_V1.0.1_signed.bin
+        build/NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_V1.0.1.bin \
+        build/NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_V1.0.1_signed.bin
         ```
 
     -   NuMaker-IoT-M487
@@ -223,8 +279,8 @@ In the following, we take NuMaker-IoT-M467, NuMaker-IoT-M487, or NuMaker-M2354 a
         --header-size 4096 \
         --pad-header \
         -S 0x66000 \
-        BUILD/NUMAKER_IOT_M487/ARM/NuMaker-mbed-AWS-IoT-CSDK-OTA-example_V1.0.1.bin \
-        BUILD/NUMAKER_IOT_M487/ARM/NuMaker-mbed-AWS-IoT-CSDK-OTA-example_V1.0.1_signed.bin
+        build/NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_V1.0.1.bin \
+        build/NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_V1.0.1_signed.bin
         ```
 
     **NOTE**: This file is for upload to AWS S3 bucket later.
@@ -235,19 +291,19 @@ In the following, we take NuMaker-IoT-M467, NuMaker-IoT-M487, or NuMaker-M2354 a
         ```
         $ srec_cat \
         bootloader/MCUboot/mbed-mcuboot-bootloader_m467-iot_flashiap.bin -Binary -offset 0x0 \
-        BUILD/NUMAKER_IOT_M467/ARM/NuMaker-mbed-AWS-IoT-CSDK-OTA-example_V1.0.0_signed.bin -Binary -offset 0x10000 \
-        -o BUILD/NUMAKER_IOT_M467/ARM/NuMaker-mbed-AWS-IoT-CSDK-OTA-example_V1.0.0_merged.hex -Intel
+        build/NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_V1.0.0_signed.bin -Binary -offset 0x10000 \
+        -o build/NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_merged.hex -Intel
         ```
 
     -   NuMaker-IoT-M487
         ```
         $ srec_cat \
         bootloader/MCUboot/mbed-mcuboot-bootloader_m487-iot_spif.bin -Binary -offset 0x0 \
-        BUILD/NUMAKER_IOT_M487/ARM/NuMaker-mbed-AWS-IoT-CSDK-OTA-example_V1.0.0_signed.bin -Binary -offset 0x10000 \
-        -o BUILD/NUMAKER_IOT_M487/ARM/NuMaker-mbed-AWS-IoT-CSDK-OTA-example_V1.0.0_merged.hex -Intel
+        build/NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_V1.0.0_signed.bin -Binary -offset 0x10000 \
+        -o build/NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_merged.hex -Intel
         ```
 
-        **NOTE**: The combined file `NuMaker-mbed-AWS-IoT-CSDK-OTA-example_V1.0.0_merged.hex` is for flash later.
+        **NOTE**: The combined file `NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_merged.hex` is for flash later.
 
         **NOTE**: `-offset 0x0` is to specify start address of MCUboot bootloader.
 
@@ -257,19 +313,19 @@ In the following, we take NuMaker-IoT-M467, NuMaker-IoT-M487, or NuMaker-M2354 a
 
 -   NuMaker-IoT-M467
 
-    Just drag-n-drop `NuMaker-mbed-AWS-IoT-CSDK-OTA-example_V1.0.0_merged.hex` onto NuMaker-IoT-M467 board.
+    Just drag-n-drop `NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_merged.hex` onto NuMaker-IoT-M467 board.
 
     **NOTE**: The operation above requires NuMaker-IoT-M467 board's Nu-Link2 switched to **MASS** mode (MSG to non-ON).
 
 -   NuMaker-IoT-M487
 
-    Just drag-n-drop `NuMaker-mbed-AWS-IoT-CSDK-OTA-example_V1.0.0_merged.hex` onto NuMaker-IoT-M487 board.
+    Just drag-n-drop `NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_merged.hex` onto NuMaker-IoT-M487 board.
 
     **NOTE**: The operation above requires NuMaker-IoT-M487 board's Nu-Link switched to **MASS** mode (MSG to ON).
 
 -   NuMaker-M2354
 
-    Just drag-n-drop `NuMaker-mbed-AWS-IoT-CSDK-OTA-example_V1.0.0.bin` onto NuMaker-M2354 board.
+    Just drag-n-drop `NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_merged.hex` onto NuMaker-M2354 board.
 
     **NOTE**: The operation above requires NuMaker-M2354 board's Nu-Link2 switched to **MASS** mode (MSG to non-ON).
 
@@ -301,14 +357,14 @@ The following steaps are re-statements of above and adapted to this port:
     -   NuMaker-M2354: `mbed-client-for-aws/mbed/COMPONENT_AWSIOT_PKCS11PSA/corePKCS11/core_pkcs11_config.h`
 
 1.  Select the image ??Select the bucket you created during the [prerequisite steps](#prerequisites-for-the-aws-over-the-air-update-ota) ??Upload the binary
-    -   NuMaker-IoT-M467: `NuMaker-mbed-AWS-IoT-CSDK-OTA-example_V1.0.1_signed.bin`.
-    -   NuMaker-IoT-M487: `NuMaker-mbed-AWS-IoT-CSDK-OTA-example_V1.0.1_signed.bin`.
-    -   NuMaker-M2354: `NuMaker-mbed-AWS-IoT-CSDK-OTA-example_update_V1.0.1.bin`
+    -   NuMaker-IoT-M467: `NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_V1.0.1_signed.bin`.
+    -   NuMaker-IoT-M487: `NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_V1.0.1_signed.bin`.
+    -   NuMaker-M2354: `NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_update_V1.0.1.bin`
 
 1.  For **Pathname of file on device**, it is not used. Just set to below for example.
-    -   NuMaker-IoT-M467: `NuMaker-mbed-AWS-IoT-CSDK-OTA-example_V1.0.1_signed.bin`.
-    -   NuMaker-IoT-M487: `NuMaker-mbed-AWS-IoT-CSDK-OTA-example_V1.0.1_signed.bin`.
-    -   NuMaker-M2354: `NuMaker-mbed-AWS-IoT-CSDK-OTA-example_update_V1.0.1.bin`
+    -   NuMaker-IoT-M467: `NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_V1.0.1_signed.bin`.
+    -   NuMaker-IoT-M487: `NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_V1.0.1_signed.bin`.
+    -   NuMaker-M2354: `NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_update_V1.0.1.bin`
 
 1.  Select the IAM role created during the [prerequisite steps](#prerequisites-for-the-aws-over-the-air-update-ota).
 
@@ -381,15 +437,15 @@ Receive a new OTA update job:
 
 -   NuMaker-IoT-M467
 ```
-[INFO] [OTA] [.\mbed-client-for-aws\COMPONENT_AWSIOT_OTA\ota-for-aws-iot-embedded-sdk\source\ota.c:1645] Extracted parameter: [key: value]=[filepath: NuMaker-mbed-AWS-IoT-CSDK-OTA-example_V1.0.1_signed.bin]
+[INFO] [OTA] [.\mbed-client-for-aws\COMPONENT_AWSIOT_OTA\ota-for-aws-iot-embedded-sdk\source\ota.c:1645] Extracted parameter: [key: value]=[filepath: NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_V1.0.1_signed.bin]
 ```
 -   NuMaker-IoT-M487
 ```
-[INFO] [OTA] [.\mbed-client-for-aws\COMPONENT_AWSIOT_OTA\ota-for-aws-iot-embedded-sdk\source\ota.c:1645] Extracted parameter: [key: value]=[filepath: NuMaker-mbed-AWS-IoT-CSDK-OTA-example_V1.0.1_signed.bin]
+[INFO] [OTA] [.\mbed-client-for-aws\COMPONENT_AWSIOT_OTA\ota-for-aws-iot-embedded-sdk\source\ota.c:1645] Extracted parameter: [key: value]=[filepath: NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_V1.0.1_signed.bin]
 ```
 -   NuMaker-M2354
 ```
-[INFO] [OTA] [.\mbed-client-for-aws\COMPONENT_AWSIOT_OTA\ota-for-aws-iot-embedded-sdk\source\ota.c:1645] Extracted parameter: [key: value]=[filepath: NuMaker-mbed-AWS-IoT-CSDK-OTA-example_update_V1.0.1.bin]
+[INFO] [OTA] [.\mbed-client-for-aws\COMPONENT_AWSIOT_OTA\ota-for-aws-iot-embedded-sdk\source\ota.c:1645] Extracted parameter: [key: value]=[filepath: NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example_update_V1.0.1.bin]
 ```
 
 ```
@@ -531,7 +587,7 @@ AWS connection parameters and credentails are placed here.
 
 #### Pre-main (`pre-main/`)
 
-In Mbed OS boot sequence, `mbed_main()`, designed for user application override, is run before `main()`.
+In Mbed CE boot sequence, `mbed_main()`, designed for user application override, is run before `main()`.
 Here, it is used to run the following tasks:
 
 1.  Simulate provision process for development (`provision/`)
@@ -656,7 +712,7 @@ The example here is port of [SDK ota_demo_core_mqtt](https://github.com/aws/aws-
 
     **NOTE**: To change attached signing keys `signing-keys.pem`/`signing_keys.c` for production,
     follow [change signing keys](https://github.com/OpenNuvoton/mbed-mcuboot-demo/NUVOTON_QUICK_START.md#changing-signing-keys),
-    to re-create signing keys and update them in both `mbed-mcuboot-demo` and `NuMaker-mbed-AWS-IoT-CSDK-OTA-example` repositories.
+    to re-create signing keys and update them in both `mbed-mcuboot-demo` and `NuMaker-mbed-ce-AWS-IoT-CSDK-OTA-example` repositories.
 
 -   NuMaker-M2354: TF-M integrated MCUboot
 
